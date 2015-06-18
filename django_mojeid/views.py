@@ -218,14 +218,11 @@ class MojeIDLoginView(MojeIdView):
 
 class TopView(TemplateView):
 
-    template_name='openid/top.html'
+    template_name = 'openid/top.html'
 
     def get(self, request, *args, **kwargs):
         #url = request.build_absolute_uri(reverse(xrds))
-        title = getattr(settings, 'OPENID_APP_TITLE', 'OpenID Backend')
         return render_to_response(
-            self.template_name,
-            #{'url': url,
-            {'title': title},
+            self.template_name, {},
             context_instance=RequestContext(request)
         )
