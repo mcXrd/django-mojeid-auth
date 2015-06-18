@@ -43,31 +43,13 @@ MOJEID_ENDPOINT_URL = 'https://mojeid.fred.nic.cz/endpoint/'
 MOJEID_REGISTRATION_URL = 'https://mojeid.fred.nic.cz/registration/endpoint/'
 
 
-def get_attributes(attribute_set):
-
-    default = getattr(settings, 'MOJEID_ATTRIBUTES', [])
-    res = getattr(settings, 'MOJEID_ATTRIBUTES_SETS', {})
-
-    # MOJEID_ATTRIBUTES are default when present
-    if default or not res:
-        res['default'] = default
-
-    try:
-        return res[attribute_set]
-    except KeyError:
-        raise Http404
-
-
-def get_attribute_query(attribute_set='defualt'):
-    """ Return attributes without duplicities """
-    attributes = get_attributes(attribute_set)
+def get_attribute_query(attributes):
 
     used_dict = {}
     filtered_attributes = []
     for attribute in attributes:
 
         required = attribute.required
-        attribute = attribute.attribute if attribute.type == 'handler' else attribute
 
         if attribute.code in used_dict:
             if not filtered_attributes[used_dict[attribute.code]][1]:
@@ -96,56 +78,17 @@ class MojeIDAttribute(object):
     schema = None
     text = None
 
-    def __init__(self, modelApp, modelClass, modelAttribute,
-                 user_id_field_name='user_id', required=True,
-                 updatable=False, use_for_registration=True):
-        self.modelClass = modelClass
-        self.modelApp = modelApp
+    def __init__(self, modelAttribute, required=True,
+                 updatable=False):
         self.modelAttribute = modelAttribute
-        self.user_id_field_name = user_id_field_name
         self.required = required
         self.updatable = updatable
-        self.use_for_registration = use_for_registration
-        self._model = None
-
-    @property
-    def model(self):
-        if not self._model:
-            # Import model during runtime
-            from django.db.models.loading import get_model
-            # set the model
-            self._model = get_model(self.modelApp, self.modelClass)
-            if not self._model:
-                raise ImproperlyConfigured(_("Model '%(model)s' from App '%(app)s' does not exist.")
-                                           % {'model': self.modelClass, 'app': self.modelApp})
-        return self._model
-
-    # This method could be overwritten using inheritance
-    def _set(self, record, attribute, value):
-        # Simply just set the attribute
-        setattr(record, attribute, value)
-
-    # This method could be overwritten using inheritance
-    def _get_record(self, id):
-        packed = {self.user_id_field_name: id}
-        return self.model.objects.get(**packed)
 
     # This method could be overwritten using inheritance
     @classmethod
     def _get_value(cls, response):
         return response.getSingle(cls.schema, None)
 
-    def set_model_value(self, id, value):
-        record = self._get_record(id)
-        if not hasattr(record, self.modelAttribute):
-            raise FieldError(_("Cannot resolve keyword '%(model)s' into field. Choices are: %(choices)s")
-                             % {"model": self.modelAttribute, "choices": ", ".join(record._meta._name_map.keys())})
-        self._set(record, self.modelAttribute, value)
-        record.save()
-
-    # This method could be overwritten using inheritance
-    def _get_model_value(self, id):
-        return getattr(self._get_record(id), self.modelAttribute)
 
     @classmethod
     def generate_ax_attrinfo(cls, required):
@@ -160,34 +103,6 @@ class MojeIDAttribute(object):
                 % {"code": unicode(cls.code), "text": unicode(cls.text)}
             )
         return value
-
-    def registration_form_attrs(self, id):
-        # Return none if registration field is not present
-        if not hasattr(self, 'registration_field') or not self.use_for_registration:
-            return None
-
-        value = self._get_model_value(id)
-        # No value present
-        if value is None:
-            return None
-
-        return {'name': self.registration_field, 'label': self.text.decode('utf-8'), 'value': value}
-
-    # This method could be overwritten using inheritance
-    def _get_form_html_template(self):
-        return u'<label for="%s">%s</label><input type="text" name="%s" value="%s">'
-
-    def registration_form_attrs_html(self, id):
-
-        field = self.registration_form_attrs(id)
-
-        # Field was not obtained.
-        if not field:
-            return ""
-
-        return self._get_form_html_template() % (
-            field['name'], field['label'], field['name'], field['value']
-        )
 
 
 class MojeIDBooleanAttribute(MojeIDAttribute):

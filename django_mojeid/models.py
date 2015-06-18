@@ -79,19 +79,3 @@ class Association(models.Model):
 
     def __unicode__(self):
         return u"Association: %s, %s" % (self.server_url, self.handle)
-
-
-class UserOpenID(models.Model):
-    user_id = models.IntegerField(primary_key=True)
-    claimed_id = models.TextField(max_length=2047, unique=True)
-
-    @property
-    def name(self):
-        return urlparse.urlparse(self.claimed_id).netloc
-
-    @property
-    def display_id(self):
-        return urlparse.urldefrag(self.claimed_id)[0]
-
-    def __unicode__(self):
-        return self.name
