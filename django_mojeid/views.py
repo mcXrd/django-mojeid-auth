@@ -143,7 +143,6 @@ class MojeIdCallbackView(MojeIdView):
 
         res = {}
         for attribute in attributes:
-            print attribute
             val = attribute.get_value(fetch_response, False)
             res[attribute.modelAttribute] = val
         return res
@@ -186,7 +185,6 @@ class MojeIDLoginView(MojeIdView):
 
     def get(self, request, *args, **kwargs):
         consumer = make_consumer(request)
-        request.session.save()
         try:
             openid_request = consumer.begin(settings.MOJEID_ENDPOINT_URL)
         except DiscoveryFailure as exc:
