@@ -76,4 +76,7 @@ setup(
     },
     provides=['django_mojeid'],
     requires=['django (>=1.5.1)', 'openid (>=2.2.0)'],
+    dependency_links=[
+     'https://github.com/openid/python-openid/tarball/2.2.5#egg=python-openid-2.2.5'
+    ]
 )
