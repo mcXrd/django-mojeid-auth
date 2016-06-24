@@ -37,6 +37,18 @@ from openid.store.nonce import SKEW
 from django_mojeid.models import Association, Nonce
 
 
+def encode_base64(input):
+    if not isinstance(input, bytes):
+        input = input.encode('ascii')
+    return base64.encodebytes(input)
+
+
+def decode_base64(input):
+    if not isinstance(input, bytes):
+        input = input.encode('ascii')
+    return base64.decodebytes(input)
+
+
 class DjangoOpenIDStore(OpenIDStore):
 
     def __init__(self):
@@ -50,12 +62,12 @@ class DjangoOpenIDStore(OpenIDStore):
             assoc = Association(
                 server_url=server_url,
                 handle=association.handle,
-                secret=base64.encodestring(association.secret),
+                secret=encode_base64(association.secret),
                 issued=association.issued,
                 lifetime=association.lifetime,
                 assoc_type=association.assoc_type)
         else:
-            assoc.secret = base64.encodestring(association.secret)
+            assoc.secret = encode_base64(association.secret)
             assoc.issued = association.issued
             assoc.lifetime = association.lifetime
             assoc.assoc_type = association.assoc_type
@@ -72,10 +84,10 @@ class DjangoOpenIDStore(OpenIDStore):
         expired = []
         for assoc in assocs:
             association = OIDAssociation(
-                assoc.handle, base64.decodestring(assoc.secret), assoc.issued,
+                assoc.handle, decode_base64(assoc.secret), assoc.issued,
                 assoc.lifetime, assoc.assoc_type
             )
-            if association.getExpiresIn() == 0:
+            if association.expiresIn == 0:
                 expired.append(assoc)
             else:
                 associations.append((association.issued, association))

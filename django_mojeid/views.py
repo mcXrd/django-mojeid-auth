@@ -28,9 +28,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from urllib import urlencode
-
-from urlparse import urlsplit
+from six.moves.urllib.parse import urlencode, urlsplit
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
@@ -57,7 +55,7 @@ from django_mojeid.exceptions import (
     DjangoOpenIDException,
 )
 
-import errors
+from django_mojeid import errors
 
 
 def sanitise_redirect_url(redirect_to):
@@ -120,7 +118,10 @@ def parse_openid_response(request):
     current_url = request.build_absolute_uri()
 
     consumer = make_consumer(request)
-    return consumer.complete(dict(request.REQUEST.items()), current_url)
+
+    params = dict(request.GET.items())
+    params.update(dict(request.POST.items()))
+    return consumer.complete(params, current_url)
 
 
 class MojeIdView(TemplateView):
@@ -165,7 +166,6 @@ class MojeIdCallbackView(MojeIdView):
         if openid_response and openid_response.status == SUCCESS:
             try:
                 return self._process_mojeid_data(self._get_openid_attributes(openid_response))
-
             except DjangoOpenIDException as e:
                 self._warning(errors.AuthenticationFailed(e).msg)
                 return self._render_default_error_response()

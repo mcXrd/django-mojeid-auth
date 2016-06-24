@@ -31,7 +31,6 @@ from django.db import models
 
 import os
 import time
-import urlparse
 
 
 class Nonce(models.Model):
