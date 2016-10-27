@@ -32,7 +32,7 @@ from six.moves.urllib.parse import urlencode, urlsplit
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
@@ -220,7 +220,4 @@ class TopView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         #url = request.build_absolute_uri(reverse(xrds))
-        return render_to_response(
-            self.template_name, {},
-            context_instance=RequestContext(request)
-        )
+        return render(request, self.template_name, {})

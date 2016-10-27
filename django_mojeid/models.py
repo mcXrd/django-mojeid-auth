@@ -29,6 +29,7 @@
 
 from django.db import models
 
+import base64
 import os
 import time
 
@@ -46,7 +47,7 @@ class Nonce(models.Model):
 
         # Generate default salt
         if not 'salt' in kwargs:
-            kwargs['salt'] = os.urandom(30).encode('base64')[:-1]
+            kwargs['salt'] = base64.b64encode(os.urandom(30))
 
         # Set the timestamp if not present
         if not 'timestamp' in kwargs:
